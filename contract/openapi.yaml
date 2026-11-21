@@ -1,0 +1,374 @@
+
+openapi: 3.0.3
+
+info:
+  title: Artonad Sprint 1 API
+  version: 1.1.0
+  description: |
+    Shared REST API contract for Artonad Sprint 1.
+    Dev2 owns authentication, responders, and zones.
+    Dev1 owns incident endpoints.
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local backend
+
+tags:
+  - name: Auth
+  - name: Incidents
+  - name: Responders
+  - name: Zones
+
+paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in and receive a JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /incidents:
+    post:
+      tags: [Incidents]
+      summary: Report a new emergency
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIncidentRequest'
+      responses:
+        '201':
+          description: Incident created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Incident'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    get:
+      tags: [Incidents]
+      summary: List incidents for the admin dashboard
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Incident list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Incident'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /incidents/{id}:
+    get:
+      tags: [Incidents]
+      summary: Get an incident by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Incident details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Incident'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Incident not found
+
+  /responders:
+    get:
+      tags: [Responders]
+      summary: List responders for the admin dashboard
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Responder list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Responder'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /zones:
+    get:
+      tags: [Zones]
+      summary: Get risk zones and resorts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: GeoJSON zones and resort locations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZonesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+
+  schemas:
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          example: tourist1
+        password:
+          type: string
+          format: password
+          example: tourist123
+
+    LoginResponse:
+      type: object
+      required: [token, role, userId]
+      properties:
+        token:
+          type: string
+          description: JWT access token
+        role:
+          type: string
+          enum: [TOURIST, ADMIN]
+        userId:
+          type: integer
+          format: int64
+
+
+    Location:
+      type: object
+      required: [lat, lng]
+      properties:
+        lat:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+        lng:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+
+    CreateIncidentRequest:
+      type: object
+      required: [type, peopleCount, location]
+      properties:
+        type:
+          type: string
+          enum: [FIRE, DROWNING]
+        peopleCount:
+          type: integer
+          minimum: 1
+        note:
+          type: string
+          maxLength: 500
+        location:
+          $ref: '#/components/schemas/Location'
+
+
+    Incident:
+      type: object
+      required:
+        - id
+        - type
+        - severity
+        - peopleCount
+        - location
+        - status
+        - recommendedResponders
+        - createdAt
+      properties:
+        id:
+          type: integer
+          format: int64
+        type:
+          type: string
+          enum: [FIRE, DROWNING]
+        severity:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+        peopleCount:
+          type: integer
+        note:
+          type: string
+          nullable: true
+        location:
+          $ref: '#/components/schemas/Location'
+        status:
+          type: string
+          enum: [REPORTED, ASSIGNED, ACCEPTED, DECLINED, RESOLVED]
+        zone:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+              format: int64
+            name:
+              type: string
+        nearestResort:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+              format: int64
+            name:
+              type: string
+            distanceM:
+              type: integer
+        recommendedResponders:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                format: int64
+              name:
+                type: string
+              role:
+                type: string
+              distanceM:
+                type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+
+    Responder:
+      type: object
+      required: [id, name, role, available, location]
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        role:
+          type: string
+          enum: [LIFEGUARD, FIREFIGHTER]
+        available:
+          type: boolean
+        location:
+          $ref: '#/components/schemas/Location'
+
+    Resort:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        location:
+          $ref: '#/components/schemas/Location'
+        fireEquipment:
+          type: string
+          nullable: true
+
+    ZonesResponse:
+      type: object
+      required: [zones, resorts]
+      properties:
+        zones:
+          type: object
+          description: GeoJSON FeatureCollection
+          properties:
+            type:
+              type: string
+              enum: [FeatureCollection]
+            features:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+        resorts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resort'
+
+    ApiError:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          example: VALIDATION_FAILED
+        message:
+          type: string
+
+security:
+  - bearerAuth: []
