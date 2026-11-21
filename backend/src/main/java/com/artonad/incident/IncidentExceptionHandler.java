@@ -1,6 +1,6 @@
 package com.artonad.incident;
 
-import tools.jackson.databind.exc.InvalidFormatException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -39,7 +39,7 @@ public class IncidentExceptionHandler {
     public ResponseEntity<ErrorBody> handleUnreadable(HttpMessageNotReadableException ex) {
         String message = "Request body is missing or malformed";
         if (ex.getCause() instanceof InvalidFormatException ife && !ife.getPath().isEmpty()) {
-            String field = ife.getPath().get(ife.getPath().size() - 1).getPropertyName();
+            String field = ife.getPath().get(ife.getPath().size() - 1).getFieldName();
             message = ife.getTargetType().isEnum()
                     ? field + " must be one of " + Arrays.toString(ife.getTargetType().getEnumConstants())
                     : field + " has an invalid value: " + ife.getValue();
