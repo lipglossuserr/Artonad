@@ -1,3 +1,4 @@
+
 package com.artonad.backend.exception;
 
 import org.springframework.http.HttpStatus;
@@ -7,6 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Map;
 
@@ -53,9 +55,21 @@ public class GlobalExceptionHandler {
         ));
     }
 
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Map<String, String>> handleNotFound(
+            NoResourceFoundException ex) {
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+            "error", "NOT_FOUND",
+            "message", "The requested endpoint does not exist"
+        ));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleUnexpected(
             Exception ex) {
+
+        ex.printStackTrace();
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of(

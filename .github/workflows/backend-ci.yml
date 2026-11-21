@@ -1,0 +1,40 @@
+
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - dev2/auth-platform
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Run backend tests
+        run: ./mvnw -B test
+        env:
+          DB_PASSWORD: artonad_dev_password
+          ARTONAD_JWT_SECRET: artonad-ci-test-secret-only-not-for-production

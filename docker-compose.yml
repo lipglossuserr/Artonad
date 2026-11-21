@@ -1,3 +1,4 @@
+
 services:
   db:
     image: postgis/postgis:16-3.4
@@ -6,7 +7,7 @@ services:
     environment:
       POSTGRES_DB: artonad
       POSTGRES_USER: artonad
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-artonad_dev_password}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
     ports:
       - "5433:5432"
     volumes:
@@ -26,8 +27,8 @@ services:
     environment:
       DB_URL: jdbc:postgresql://db:5432/artonad
       DB_USER: artonad
-      DB_PASSWORD: ${DB_PASSWORD:-artonad_dev_password}
-      ARTONAD_JWT_SECRET: ${ARTONAD_JWT_SECRET:-artonad-local-dev-secret-change-before-deploy-2026}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
+      ARTONAD_JWT_SECRET: ${ARTONAD_JWT_SECRET:?Set ARTONAD_JWT_SECRET}
     depends_on:
       db:
         condition: service_healthy
