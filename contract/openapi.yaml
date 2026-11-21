@@ -38,6 +38,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LoginResponse'
+              example:
+                token: demo-jwt-token
+                role: TOURIST
+                userId: 1
         '401':
           $ref: '#/components/responses/Unauthorized'
 
@@ -128,6 +132,21 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Responder'
+              example:
+                - id: 1
+                  name: Demo Lifeguard
+                  role: LIFEGUARD
+                  available: true
+                  location:
+                    lat: 21.4272
+                    lng: 92.0058
+                - id: 2
+                  name: Demo Firefighter
+                  role: FIREFIGHTER
+                  available: true
+                  location:
+                    lat: 21.4300
+                    lng: 92.0100
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -146,6 +165,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ZonesResponse'
+              example:
+                zones:
+                  type: FeatureCollection
+                  features: []
+                resorts:
+                  - id: 1
+                    name: Demo Beach Resort
+                    location:
+                      lat: 21.4272
+                      lng: 92.0058
+                    fireEquipment: Fire extinguishers
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -165,12 +195,14 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ApiError'
+
     Unauthorized:
       description: Missing or invalid authentication
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ApiError'
+
     Forbidden:
       description: Insufficient permissions
       content:
@@ -205,7 +237,6 @@ components:
           type: integer
           format: int64
 
-
     Location:
       type: object
       required: [lat, lng]
@@ -237,7 +268,6 @@ components:
         location:
           $ref: '#/components/schemas/Location'
 
-
     Incident:
       type: object
       required:
@@ -268,7 +298,12 @@ components:
           $ref: '#/components/schemas/Location'
         status:
           type: string
-          enum: [REPORTED, ASSIGNED, ACCEPTED, DECLINED, RESOLVED]
+          enum:
+            - REPORTED
+            - ASSIGNED
+            - ACCEPTED
+            - DECLINED
+            - RESOLVED
         zone:
           type: object
           nullable: true
@@ -306,7 +341,6 @@ components:
         createdAt:
           type: string
           format: date-time
-
 
     Responder:
       type: object
