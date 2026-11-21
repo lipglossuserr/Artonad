@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: artonad-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: artonad
+      POSTGRES_USER: artonad
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-artonad_dev_password}
+    ports:
+      - "5433:5432"
+    volumes:
+      - artonad_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U artonad -d artonad"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    image: artonad-backend:dev
+    build:
+      context: ./backend
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/artonad
+      DB_USER: artonad
+      DB_PASSWORD: ${DB_PASSWORD:-artonad_dev_password}
+      ARTONAD_JWT_SECRET: ${ARTONAD_JWT_SECRET:-artonad-local-dev-secret-change-before-deploy-2026}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  artonad_postgres_data:
