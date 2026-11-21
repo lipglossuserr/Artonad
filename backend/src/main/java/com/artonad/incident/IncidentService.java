@@ -3,10 +3,12 @@ package com.artonad.incident;
 import com.artonad.incident.SpatialRepository.ResortHit;
 import com.artonad.incident.dto.CreateIncidentRequest;
 import com.artonad.incident.dto.IncidentResponse;
+import com.artonad.incident.dto.IncidentResponse.ResponderRef;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class IncidentService {
@@ -39,19 +41,27 @@ public class IncidentService {
                 resort == null ? null : resort.id(),
                 resort == null ? null : resort.distanceM());
 
-        return getById(id);
+        return getById(id); // the response includes recommendations, like GET /incidents/{id}
     }
 
+    /** Recommendations are computed on every read, so they reflect current availability. */
     @Transactional(readOnly = true)
     public IncidentResponse getById(long id) {
-        // Phase 5: add recommendations here.
-        return repository.findById(id).orElseThrow(() -> new IncidentNotFoundException(id));
+        IncidentResponse incident = repository.findById(id)
+                .orElseThrow(() -> new IncidentNotFoundException(id));
+        List<ResponderRef> recommended = spatial.recommendResponders(List.of(id))
+                .getOrDefault(id, List.of());
+        return incident.withRecommendedResponders(recommended);
     }
 
     @Transactional(readOnly = true)
     public List<IncidentResponse> listAll() {
-        // Phase 5: add recommendations here too.
-        return repository.findAllNewestFirst();
+        List<IncidentResponse> incidents = repository.findAllNewestFirst();
+        Map<Long, List<ResponderRef>> recommended = spatial.recommendResponders(
+                incidents.stream().map(IncidentResponse::id).toList());
+        return incidents.stream()
+                .map(i -> i.withRecommendedResponders(recommended.getOrDefault(i.id(), List.of())))
+                .toList();
     }
 
     private static String cleanNote(String note) {
