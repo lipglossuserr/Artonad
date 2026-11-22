@@ -58,6 +58,12 @@ public class IncidentExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ErrorBody("NOT_FOUND", ex.getMessage()));
     }
+    /** A tourist asked for someone else's incident. */
+    @ExceptionHandler(IncidentAccessDeniedException.class)
+    public ResponseEntity<ErrorBody> handleAccessDenied(IncidentAccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErrorBody("FORBIDDEN", ex.getMessage()));
+    }
 
     private ResponseEntity<ErrorBody> badRequest(String message) {
         return ResponseEntity.badRequest().body(new ErrorBody("VALIDATION_FAILED", message));

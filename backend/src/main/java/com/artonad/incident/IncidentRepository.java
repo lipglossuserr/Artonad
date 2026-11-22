@@ -66,6 +66,33 @@ public class IncidentRepository {
                 .query(this::mapRow)
                 .list();
     }
+    /** Stores the tagging results. Null values are fine (outside every zone / no resort within 2 km). */
+    public void updateTags(long incidentId, Long zoneId, Long resortId, Integer resortDistanceM) {
+        jdbc.sql("""
+                        UPDATE incidents
+                        SET zone_id = :zoneId,
+                            nearest_resort_id = :resortId,
+                            nearest_resort_distance_m = :distanceM
+                        WHERE id = :id
+                        """)
+                .param("zoneId", zoneId, Types.BIGINT)
+                .param("resortId", resortId, Types.BIGINT)
+                .param("distanceM", resortDistanceM, Types.INTEGER)
+                .param("id", incidentId)
+                .update();
+    }
+    /** True when the incident exists and was reported by this user. */
+    public boolean isReportedBy(long incidentId, long userId) {
+        return jdbc.sql("""
+                        SELECT EXISTS (SELECT 1 FROM incidents
+                                       WHERE id = :id AND reporter_id = :userId)
+                        """)
+                .param("id", incidentId)
+                .param("userId", userId)
+                .query(Boolean.class)
+                .single();
+    }
+
 
     private IncidentResponse mapRow(ResultSet rs, int rowNum) throws SQLException {
         Long zoneId = rs.getObject("zone_id", Long.class);
@@ -74,6 +101,8 @@ public class IncidentRepository {
         Long resortId = rs.getObject("nearest_resort_id", Long.class);
         ResortRef resort = (resortId == null) ? null
                 : new ResortRef(resortId, rs.getString("resort_name"), rs.getInt("nearest_resort_distance_m"));
+
+
 
         return new IncidentResponse(
                 rs.getLong("id"),
