@@ -1,6 +1,6 @@
 
 package com.artonad.backend.exception;
-
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -64,7 +64,15 @@ public class GlobalExceptionHandler {
             "message", "The requested endpoint does not exist"
         ));
     }
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Map<String, String>> handleMethodNotAllowed(
+        HttpRequestMethodNotSupportedException ex) {
 
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(Map.of(
+        "error", "METHOD_NOT_ALLOWED",
+        "message", "HTTP method is not supported for this endpoint"
+        ));
+    }
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleUnexpected(
             Exception ex) {
