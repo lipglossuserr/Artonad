@@ -160,6 +160,16 @@ class IncidentApiSecurityTest extends AbstractPostgisTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("NOT_FOUND"));
     }
+    @Test
+        void unsupportedHttpMethodReturns405() throws Exception {
+        mockMvc.perform(
+            org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                    .patch("/api/v1/incidents")
+                    .header("Authorization", bearer(userId("admin1"), "ADMIN"))
+        )
+        .andExpect(status().isMethodNotAllowed())
+        .andExpect(jsonPath("$.error").value("METHOD_NOT_ALLOWED"));
+        }
 
     // ---------- the old unversioned route must stay gone ----------
 
