@@ -1,17 +1,16 @@
-
 services:
   db:
-    image: postgis/postgis:16-3.4
-    container_name: artonad-db
+    image: postgis/postgis:18-3.6
+    container_name: artonad-db18
     restart: unless-stopped
     environment:
       POSTGRES_DB: artonad
       POSTGRES_USER: artonad
       POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
-      - artonad_postgres_data:/var/lib/postgresql/data
+      - artonad_pg18_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U artonad -d artonad"]
       interval: 5s
@@ -34,4 +33,5 @@ services:
         condition: service_healthy
 
 volumes:
-  artonad_postgres_data:
+  artonad_pg18_data:
+    external: true
