@@ -81,6 +81,18 @@ public class IncidentRepository {
                 .param("id", incidentId)
                 .update();
     }
+    /** True when the incident exists and was reported by this user. */
+    public boolean isReportedBy(long incidentId, long userId) {
+        return jdbc.sql("""
+                        SELECT EXISTS (SELECT 1 FROM incidents
+                                       WHERE id = :id AND reporter_id = :userId)
+                        """)
+                .param("id", incidentId)
+                .param("userId", userId)
+                .query(Boolean.class)
+                .single();
+    }
+
 
     private IncidentResponse mapRow(ResultSet rs, int rowNum) throws SQLException {
         Long zoneId = rs.getObject("zone_id", Long.class);

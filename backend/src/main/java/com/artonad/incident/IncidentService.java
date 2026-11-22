@@ -53,6 +53,15 @@ public class IncidentService {
                 .getOrDefault(id, List.of());
         return incident.withRecommendedResponders(recommended);
     }
+    /** Admins may read any incident; a tourist only their own (the contract allows a 403 here). */
+    @Transactional(readOnly = true)
+    public IncidentResponse getForUser(long id, long userId, boolean admin) {
+        IncidentResponse incident = getById(id);   // a missing id is always a 404, never a 403
+        if (!admin && !repository.isReportedBy(id, userId)) {
+            throw new IncidentAccessDeniedException();
+        }
+        return incident;
+    }
 
     @Transactional(readOnly = true)
     public List<IncidentResponse> listAll() {

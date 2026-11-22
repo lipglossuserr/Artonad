@@ -4,13 +4,18 @@ import com.artonad.incident.dto.CreateIncidentRequest;
 import com.artonad.incident.dto.IncidentResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
 
+/**
+ * Role rules (POST = TOURIST, GET list = ADMIN, GET one = both) live in Dev2's SecurityConfig.
+ * The only rule enforced here is ownership: a tourist can read only incidents they reported.
+ */
 @RestController
-@RequestMapping("/incidents")
+@RequestMapping("/api/v1/incidents")
 public class IncidentController {
 
     private final IncidentService service;
@@ -20,10 +25,10 @@ public class IncidentController {
     }
 
     @PostMapping
-    public ResponseEntity<IncidentResponse> create(@Valid @RequestBody CreateIncidentRequest request) {
-        Long reporterId = null; // Day 8: replace with the logged-in user's id from Dev2's JWT
-        IncidentResponse created = service.create(request, reporterId);
-        return ResponseEntity.created(URI.create("/incidents/" + created.id())).body(created);
+    public ResponseEntity<IncidentResponse> create(@Valid @RequestBody CreateIncidentRequest request,
+                                                   Authentication authentication) {
+        IncidentResponse created = service.create(request, userId(authentication));
+        return ResponseEntity.created(URI.create("/api/v1/incidents/" + created.id())).body(created);
     }
 
     @GetMapping
@@ -32,7 +37,17 @@ public class IncidentController {
     }
 
     @GetMapping("/{id}")
-    public IncidentResponse get(@PathVariable long id) {
-        return service.getById(id);
+    public IncidentResponse get(@PathVariable long id, Authentication authentication) {
+        return service.getForUser(id, userId(authentication), isAdmin(authentication));
+    }
+
+    /** Dev2's JwtAuthenticationFilter stores the user id (a Long) as the principal. */
+    private static Long userId(Authentication authentication) {
+        return (Long) authentication.getPrincipal();
+    }
+
+    private static boolean isAdmin(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
     }
 }
