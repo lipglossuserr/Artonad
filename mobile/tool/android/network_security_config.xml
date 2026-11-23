@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  DEVELOPMENT ONLY. Installed under android/app/src/debug/ so release builds
+  never include it. Allows plain-HTTP to the Android emulator's host alias and
+  the laptop Wi-Fi address used by the physical phone. Everything else keeps
+  Android's default (cleartext blocked on API 28+).
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <domain includeSubdomains="false">172.20.10.2</domain>
+    </domain-config>
+</network-security-config>
