@@ -33,7 +33,11 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
+                .requestMatchers(
+                    HttpMethod.POST,
+                     "/api/v1/auth/login",
+                    "/api/v1/auth/signup"
+                    ).permitAll()
                 .requestMatchers("/actuator/health").permitAll()
 
                 .requestMatchers(HttpMethod.POST, "/api/v1/incidents")
