@@ -1,3 +1,4 @@
+
 package com.artonad.backend.auth;
 
 import com.artonad.backend.security.JwtService;
@@ -43,6 +44,49 @@ public class AuthController {
         String token = jwtService.generateToken(user.getUserId(), role);
 
         return ResponseEntity.ok(
-                new LoginResponse(token, role, user.getUserId()));
+                new LoginResponse(
+                        token,
+                        role,
+                        user.getUserId(),
+                        user.getName()
+                )
+        );
+    }
+
+    @PostMapping("/signup")
+    public ResponseEntity<String> signup(
+            @Valid @RequestBody SignupRequest request) {
+
+        if (userRepository.existsByUsername(request.username())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Username already exists"
+            );
+        }
+
+        if (userRepository.existsByEmail(request.email())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Email already exists"
+            );
+        }
+
+        String hashedPassword =
+                passwordEncoder.encode(request.password());
+
+        AppUser user = new AppUser(
+                request.name(),
+                request.phone(),
+                request.email(),
+                request.username(),
+                hashedPassword,
+                "TOURIST"
+        );
+
+        userRepository.save(user);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body("User registered successfully");
     }
 }
